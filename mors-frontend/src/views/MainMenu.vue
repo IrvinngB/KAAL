@@ -58,10 +58,10 @@ async function onContinue() {
       <!-- Title Block -->
       <div class="mb-12 title-breath">
         <h1 class="text-8xl md:text-9xl font-black tracking-[0.25em] text-snow mb-2 drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]" style="margin-right: -0.25em;">
-          MORS
+          KAAL
         </h1>
         <p class="text-sm md:text-base text-ice/60 italic tracking-[0.2em] font-light">
-          Non Omnis Moriar — No todo de mí morirá
+          Ma mardina (म मर्दिन) — No moriré
         </p>
       </div>
 

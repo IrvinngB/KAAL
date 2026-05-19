@@ -99,7 +99,7 @@ ROLE_VOICE: dict[str, dict] = {
 
 
 # ═══════════════════════════════════════════════════════════════
-# MOUNTAINEERING QUOTES (replace Latin phrases)
+# MOUNTAINEERING QUOTES
 # Real quotes from real climbers. These appear at the end of
 # epitaphs and summit narratives for authenticity.
 # ═══════════════════════════════════════════════════════════════
@@ -121,6 +121,28 @@ MOUNTAINEERING_QUOTES = [
     '"No busco la muerte, pero no me importa morir en las montañas." — Wanda Rutkiewicz',
     '"El alpinismo es un juego en el que el castigo por cometer un error es la muerte." — Mark Twight',
     '"El precio de la vida es la vida misma." — Reinhold Messner',
+]
+
+
+# ═══════════════════════════════════════════════════════════════
+# NEPALI PHRASES
+# Words of the Himalayas. Mixed into epitaphs and summit narratives
+# alongside mountaineering quotes for cultural authenticity.
+# ═══════════════════════════════════════════════════════════════
+
+NEPALI_PHRASES = [
+    "Ma mardina (म मर्दिन) — No moriré.",
+    "Bistarai bistarai (बिस्तारै बिस्तारै) — Despacio, despacio.",
+    "Eklai (एक्लै) — Solo. En soledad.",
+    "Paila (पाइला) — Un solo paso.",
+    "Sahasa (साहस) — Coraje. Voluntad pura.",
+    "Agadi badha (अगाडि बढ) — Avanza hacia adelante.",
+    "Man mardaina (मन मर्दैन) — La mente no muere.",
+    "Shunyata (शून्यता) — El vacío absoluto. Silencio de la cumbre.",
+    "Himalaya (हिमालय) — La morada de la nieve.",
+    "Gari-gara (गरि-गर) — Último esfuerzo.",
+    "Mero antim sasa (मेरो अन्तिम श्वास) — Mi último respiro.",
+    "Dherai mathi (धेरै माथि) — Demasiado alto.",
 ]
 
 
@@ -406,7 +428,7 @@ EPITAPHS = {
     ],
     "default": [
         "La montaña te reclamó. Tu nombre se pierde en el viento.",
-        "Non Omnis Moriar — No todo de mí morirá en esta montaña.",
+        "Ma mardina (म मर्दिन) — No moriré en esta montaña.",
         "El K2 me ha reclamado, pero no me ha vencido.",
     ],
 }
@@ -622,7 +644,9 @@ def generate_summit_narrative(role: str = "", stamina: float = 100.0, hp: float 
     else:
         condition = SUMMIT_CONDITIONS["miracle"]
 
-    quote = _select_from_list(MOUNTAINEERING_QUOTES)
+    # Pick from both mountaineering quotes and Nepali phrases
+    all_quotes = MOUNTAINEERING_QUOTES + NEPALI_PHRASES
+    quote = _select_from_list(all_quotes)
 
     return f"{base} {condition}\n\n{quote}"
 
@@ -657,8 +681,9 @@ def generate_epitaph(
     if worst_moment:
         parts.append(worst_moment)
 
-    # Real mountaineering quote instead of Latin
-    quote = _select_from_list(MOUNTAINEERING_QUOTES)
+    # Pick from both mountaineering quotes and Nepali phrases
+    all_quotes = MOUNTAINEERING_QUOTES + NEPALI_PHRASES
+    quote = _select_from_list(all_quotes)
     parts.append(quote)
 
     return " ".join(parts)

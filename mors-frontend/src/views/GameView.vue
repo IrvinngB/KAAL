@@ -93,7 +93,7 @@ function onGoToMenu() {
       <div class="flex items-center gap-3">
         <span
           v-if="game.currentRole"
-          class="text-xs px-2 py-0.5 rounded-full bg-mors/20 text-mors border border-mors/30 font-medium tracking-wide"
+          class="text-xs px-2 py-0.5 rounded-full bg-ice/10 text-ice border border-ice/20 font-medium tracking-wide"
         >
           {{ game.roleDisplayName || game.currentRole }}
         </span>
@@ -125,12 +125,14 @@ function onGoToMenu() {
       </aside>
 
       <!-- Center content -->
-      <section class="flex flex-col gap-4 order-1 lg:order-2 min-h-0">
-        <div class="card flex-1 min-h-[200px] lg:min-h-0">
-          <NarrativeLog />
-        </div>
-        <div class="card">
+      <section class="flex flex-col gap-4 order-1 lg:order-2 min-h-0 max-h-[calc(100vh-5rem)]">
+        <!-- Resources pinned at top - always visible -->
+        <div class="card shrink-0">
           <ResourceGrid />
+        </div>
+        <!-- Narrative log fills remaining space, scrolls internally -->
+        <div class="card flex-1 min-h-0 overflow-hidden">
+          <NarrativeLog />
         </div>
       </section>
 

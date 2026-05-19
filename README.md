@@ -1,24 +1,27 @@
-# MORS ☠️
+# KAAL ☠️
 
-> *Non Omnis Moriar — No Todo de Mí Morirá*
+> *Ma mardina (म मर्दिन) — No moriré*
 
 Roguelike de supervivencia en alta montaña basado en turnos. El jugador intenta escalar el K2 (8.611m) gestionando recursos físicos y psicológicos contra un motor climático impredecible. Cada turno representa una hora de expedición. No hay guardado automático. No hay segunda oportunidad.
 
 ---
 
-## ️ Características
+## Características
 
 - **Motor matemático puro** — `f(GameState, Action) → (GameState, TurnDeltas)`, sin I/O ni estado mutable
+- **Sistema de roles** — 5 roles con stats únicos, equipo inicial y habilidades especiales (Sherpa, Alpinista Clásico, Investigador, Escalador Técnico, Médico)
 - **Sistema climático Markov** — 5 estados climáticos con transiciones probabilísticas y forecast ruidoso (~25% de error)
 - **Eventos aleatorios** — 10 tipos de eventos (avalanchas, alucinaciones, edema pulmonar, segundo viento...)
 - **Psicología mecánica** — Willpower afecta la UI, las tasas de pérdida y el texto narrativo
+- **Narrativa contextual con voz por rol** — Templates que varían por altitud, clima, willpower, acción y rol del jugador
+- **Frases en nepalí** — Citas auténticas del Himalaya integradas en epitafios y narrativa de victoria
 - **Zona de la Muerte** — ≥8000m intensifica todos los efectos negativos
-- **Narrativa contextual** — Templates que varían por altitud, clima, willpower y acción
 - **Deltas explícitos** — El backend devuelve cambios por atributo para animaciones frontend
+- **Guía de supervivencia** — Pantalla in-game con todas las reglas, stats y fórmulas
 
 ---
 
-## 🛠️ Stack Tecnológico
+## Stack Tecnológico
 
 | Capa | Tecnología |
 |---|---|
@@ -26,18 +29,18 @@ Roguelike de supervivencia en alta montaña basado en turnos. El jugador intenta
 | Frontend | Vue 3 + Vite + Pinia + TypeScript |
 | Estilos | TailwindCSS v4 |
 | Estado (MVP) | Dict en memoria |
-| Tests | Pytest (backend) + vue-tsc (frontend) |
+| Tests | Pytest (backend) + Vitest (frontend) + vue-tsc |
 
 ---
 
-## 📦 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
-MORS/
+KAAL/
 ├── mors-backend/              # Backend FastAPI
 │   ├── app/
 │   │   ├── core/              # Engine puro + Markov weather
-│   │   ├── models/            # Pydantic models (GameState, enums)
+│   │   ├── models/            # Pydantic models (GameState, enums, roles)
 │   │   ├── schemas/           # API request/response schemas
 │   │   ├── repositories/      # Session storage (Protocol + Memory)
 │   │   ├── services/          # Game, event, narrative, session
@@ -48,16 +51,16 @@ MORS/
 │   │   ├── api/               # Fetch wrapper + TypeScript types
 │   │   ├── stores/            # Pinia stores (game, ui)
 │   │   ├── composables/       # useGameLoop, useAnimatedStats
-│   │   ├── views/             # MainMenu, GameView, SummitView, GameOver
+│   │   ├── views/             # MainMenu, RoleSelection, GameGuide, GameView, SummitView, GameOver
 │   │   └── components/        # HUD, gameplay, narrative, shared
 │   └── package.json
-├── mvp.md                     # Documento de diseño completo
-└── AGENTS.md                  # Instrucciones para agentes
+├── AGENTS.md                  # Instrucciones para agentes
+└── README.md                  # Este archivo
 ```
 
 ---
 
-## 🚀 Inicio Rápido
+## Inicio Rápido
 
 ### Prerrequisitos
 
@@ -92,7 +95,17 @@ npm run dev          # http://localhost:5173
 
 ---
 
-## 🎮 Reglas de Negocio
+## Reglas de Negocio
+
+### Roles
+
+| Rol | Dificultad | HP | Stamina | Willpower | Costo Stamina | Especial |
+|---|---|---|---|---|---|---|
+| **Sherpa** | Fácil | +5 | +15 | −5 | ×0.85 | −30% eventos de caída |
+| **Alpinista Clásico** | Difícil | +5 | +5 | +5 | ×1.10 | Ninguna — purismo |
+| **Investigador** | Media | −10 | −15 | +20 | ×1.05 | +25% forecast reliability |
+| **Escalador Técnico** | Normal | — | — | — | ×0.95 | −10% costo sobre 7000m |
+| **Médico** | Media | −5 | −10 | +15 | ×1.0 | 1× heal +15HP, −20% daño |
 
 ### Atributos del Jugador
 
@@ -114,18 +127,19 @@ npm run dev          # http://localhost:5173
 | Acampar | Recupera stamina/temp | 1 comida + 1 gas |
 | Usar Oxígeno | Recupera O₂ + willpower | 1 gas canister |
 | Comer | Recupera stamina leve | 1 ración |
-| Descender | -200m, mejora temp | Stamina mínima |
+| Descender | −200m, mejora temp | Stamina mínima |
 | Descansar | Recupera stamina en ruta | Willpower leve |
 
 ### Fórmula de Stamina
 
 ```
-costo = 15 × (1 + (altitud / 8000)²) × weather_mod × oxygen_mod × willpower_mod
+costo = 12 × (1 + (altitud / 8000)²) × weather_mod × oxygen_mod × willpower_mod × role_mod
 ```
 
 - `weather_mod`: CLEAR=1.0, CLOUDY=1.2, WIND=1.5, STORM=2.0, WHITEOUT=3.0
 - `oxygen_mod`: >50% O₂ → 0.8, <30% → 1.4
 - `willpower_mod`: <20 → 1.15
+- `role_mod`: multiplicador según rol elegido
 
 ### Condiciones de Victoria/Derrota
 
@@ -139,39 +153,35 @@ costo = 15 × (1 + (altitud / 8000)²) × weather_mod × oxygen_mod × willpower
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ### Backend
 
 ```bash
-PYTHONPATH=mors-backend .venv/bin/python -m pytest mors-backend/tests/ -v
+PYTHONPATH=mors-backend .venv/bin/python -m pytest mors-backend/tests/unit/ -v
 ```
-
-**100 tests passing:**
-- 52 unit tests (engine, weather, events)
-- 27 integration tests (API endpoints)
-- 15 playability tests (summit/death reachable)
 
 ### Frontend
 
 ```bash
 cd mors-frontend
 npm run type-check   # vue-tsc
+npm run test         # vitest
 npm run build        # production build
 ```
 
 ---
 
-## 📖 Documentación
+## Documentación
 
-- `mvp.md` — Documento de diseño completo con todos los requerimientos funcionales
 - `mors-backend/README.md` — Arquitectura backend, reglas de negocio, API contracts
 - `mors-frontend/README.md` — Arquitectura frontend, reglas de presentación, routing
 - `AGENTS.md` — Instrucciones para agentes de desarrollo
+- Pantalla **Guía de Supervivencia** in-game — accesible desde el menú principal
 
 ---
 
-## 🏗️ Arquitectura
+## Arquitectura
 
 ### Principios
 
@@ -179,7 +189,8 @@ npm run build        # production build
 2. **Deltas explícitos** — El backend devuelve cambios por atributo. Frontend anima sin recalcular
 3. **El pronóstico miente** — `weather` (real) vs `weather_forecast` (ruidoso ~25%)
 4. **Narrativa desacoplada** — El motor matemático no sabe nada de la IA narrativa
-5. **Repository pattern** — `AbstractSessionRepository` permite migrar memoria → Redis sin tocar el engine
+5. **Roles data-driven** — Modificadores leídos de `RoleDefinition`, no hardcoded en el engine
+6. **Repository pattern** — `AbstractSessionRepository` permite migrar memoria → Redis sin tocar el engine
 
 ### Flujo de un Turno
 
@@ -194,7 +205,7 @@ GameEngine.process(state, action) → TurnResult
     ↓
 EventService.roll() → RandomEvent | None
     ↓
-NarrativeService.generate() → texto contextual
+NarrativeService.generate(role, willpower, altitude, weather) → texto contextual
     ↓
 SessionRepository.save() → TurnResponse
     ↓
@@ -203,13 +214,13 @@ gameStore actualiza → componentes re-renderizan
 
 ---
 
-## 📝 Licencia
+## Licencia
 
 Proyecto educativo. Sin licencia formal.
 
 ---
 
-## 🙏 Créditos
+## Créditos
 
 Inspirado en la escalada del K2 y la literatura de supervivencia en alta montaña.
 

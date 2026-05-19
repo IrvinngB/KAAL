@@ -203,7 +203,7 @@ function formatCostMult(mult: number): string {
           </div>
 
           <!-- Ability -->
-          <div class="text-[11px] text-mors/80 border-t border-white/5 pt-2">
+          <div class="text-[11px] text-ice/80 border-t border-white/5 pt-2">
             <span class="text-ice/40 uppercase tracking-wider text-[9px]">Habilidad:</span>
             <span class="block mt-0.5 leading-snug">{{ role.ability }}</span>
           </div>
