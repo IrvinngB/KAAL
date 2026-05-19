@@ -79,6 +79,12 @@ async function onContinue() {
         >
           Nueva Expedición
         </button>
+        <button
+          class="text-ice/40 hover:text-snow transition-colors duration-200 text-sm tracking-widest uppercase py-2"
+          @click="router.push('/guide')"
+        >
+          Guía de Supervivencia
+        </button>
       </div>
 
       <!-- Footer Description -->

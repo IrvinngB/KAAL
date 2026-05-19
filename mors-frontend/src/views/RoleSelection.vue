@@ -85,7 +85,7 @@ const roles: RoleCard[] = [
 
 const difficultyColor: Record<string, string> = {
   Easy: 'bg-success/20 text-success border-success/30',
-  Normal: 'bg-warning/20 text-warning border-warning/30',
+  Normal: 'bg-mors/20 text-mors border-mors/30',
   Medium: 'bg-warning/20 text-warning border-warning/30',
   Hard: 'bg-danger/20 text-danger border-danger/30',
 }
@@ -102,16 +102,22 @@ function onBack() {
 function formatDelta(value: number): string {
   return value > 0 ? `+${value}` : `${value}`
 }
+
+function formatCostMult(mult: number): string {
+  if (mult < 1.0) return `−${((1 - mult) * 100).toFixed(0)}%`
+  if (mult > 1.0) return `+${((mult - 1) * 100).toFixed(0)}%`
+  return 'normal'
+}
 </script>
 
 <template>
-  <div class="relative min-h-screen bg-[#03030a] flex flex-col items-center justify-center overflow-hidden px-4 py-8">
+  <div class="relative min-h-screen bg-[#03030a] flex flex-col items-center overflow-hidden px-4 py-8">
     <!-- Background gradient -->
     <div class="absolute inset-0 bg-gradient-to-b from-[#020205] via-[#08081a] to-peak/20" />
     <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(0,0,0,0.8)_100%)] pointer-events-none z-20" />
 
     <!-- Content -->
-    <div class="relative z-30 w-full max-w-5xl animate-fade-in">
+    <div class="relative z-30 w-full max-w-6xl animate-fade-in">
       <!-- Header -->
       <div class="text-center mb-8">
         <h1 class="text-4xl md:text-5xl font-black tracking-[0.15em] text-snow mb-2">
@@ -127,13 +133,13 @@ function formatDelta(value: number): string {
         <div
           v-for="role in roles"
           :key="role.id"
-          class="glass-strong rounded-xl p-5 border border-white/10 flex flex-col gap-3 backdrop-blur-xl hover:border-white/20 transition-colors duration-200"
+          class="glass-strong rounded-xl p-4 border border-white/10 flex flex-col gap-2.5 backdrop-blur-xl hover:border-white/20 transition-colors duration-200"
         >
           <!-- Name + Difficulty -->
           <div class="flex items-center justify-between">
-            <h2 class="text-lg font-bold text-snow tracking-wide">{{ role.name }}</h2>
+            <h2 class="text-base font-bold text-snow tracking-wide">{{ role.name }}</h2>
             <span
-              class="text-xs px-2 py-0.5 rounded-full border font-medium"
+              class="text-[10px] px-1.5 py-0.5 rounded-full border font-semibold uppercase tracking-wider"
               :class="difficultyColor[role.difficulty]"
             >
               {{ role.difficulty }}
@@ -141,46 +147,47 @@ function formatDelta(value: number): string {
           </div>
 
           <!-- Description -->
-          <p class="text-ice/60 text-xs leading-relaxed">{{ role.description }}</p>
+          <p class="text-ice/60 text-[11px] leading-relaxed">{{ role.description }}</p>
 
-          <!-- Stat Deltas -->
-          <div class="grid grid-cols-3 gap-2 text-center">
-            <div class="bg-white/5 rounded-lg py-2">
-              <div class="text-xs text-ice/40 uppercase tracking-wider">HP</div>
-              <div
-                class="text-sm font-bold"
+          <!-- Stat Deltas - clean list layout -->
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-ice/40 uppercase tracking-wider text-[10px]">HP</span>
+              <span
+                class="font-bold text-sm"
                 :class="role.hp_delta >= 0 ? 'text-success' : 'text-danger'"
               >
                 {{ formatDelta(role.hp_delta) }}
-              </div>
+              </span>
             </div>
-            <div class="bg-white/5 rounded-lg py-2">
-              <div class="text-xs text-ice/40 uppercase tracking-wider">Stamina</div>
-              <div
-                class="text-sm font-bold"
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-ice/40 uppercase tracking-wider text-[10px]">Stamina</span>
+              <span
+                class="font-bold text-sm"
                 :class="role.stamina_delta >= 0 ? 'text-success' : 'text-danger'"
               >
                 {{ formatDelta(role.stamina_delta) }}
-              </div>
+              </span>
             </div>
-            <div class="bg-white/5 rounded-lg py-2">
-              <div class="text-xs text-ice/40 uppercase tracking-wider">Will</div>
-              <div
-                class="text-sm font-bold"
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-ice/40 uppercase tracking-wider text-[10px]">Willpower</span>
+              <span
+                class="font-bold text-sm"
                 :class="role.willpower_delta >= 0 ? 'text-success' : 'text-danger'"
               >
                 {{ formatDelta(role.willpower_delta) }}
-              </div>
+              </span>
             </div>
           </div>
 
           <!-- Stamina Cost -->
-          <div v-if="role.stamina_cost_multiplier !== 1.0" class="text-xs text-ice/50">
-            Costo stamina:
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-ice/40 uppercase tracking-wider text-[10px]">Costo stamina</span>
             <span
-              :class="role.stamina_cost_multiplier < 1.0 ? 'text-success' : 'text-danger'"
+              class="font-bold text-sm"
+              :class="role.stamina_cost_multiplier < 1.0 ? 'text-success' : role.stamina_cost_multiplier > 1.0 ? 'text-danger' : 'text-ice/50'"
             >
-              ×{{ role.stamina_cost_multiplier.toFixed(2) }}
+              {{ formatCostMult(role.stamina_cost_multiplier) }}
             </span>
           </div>
 
@@ -189,21 +196,21 @@ function formatDelta(value: number): string {
             <span
               v-for="item in role.equipment"
               :key="item"
-              class="text-xs bg-ice/10 text-ice/70 px-2 py-0.5 rounded"
+              class="text-[10px] bg-ice/10 text-ice/70 px-1.5 py-0.5 rounded"
             >
               {{ item }}
             </span>
           </div>
 
           <!-- Ability -->
-          <div class="text-xs text-mors/80 border-t border-white/5 pt-2 mt-1">
-            <span class="text-ice/40 uppercase tracking-wider text-[10px]">Habilidad:</span>
-            <span class="block mt-0.5">{{ role.ability }}</span>
+          <div class="text-[11px] text-mors/80 border-t border-white/5 pt-2">
+            <span class="text-ice/40 uppercase tracking-wider text-[9px]">Habilidad:</span>
+            <span class="block mt-0.5 leading-snug">{{ role.ability }}</span>
           </div>
 
           <!-- Select Button -->
           <button
-            class="btn-primary w-full text-sm tracking-widest uppercase font-semibold py-3 mt-2"
+            class="btn-primary w-full text-xs tracking-widest uppercase font-semibold py-2.5 mt-1"
             @click="onSelectRole(role.id)"
           >
             Seleccionar

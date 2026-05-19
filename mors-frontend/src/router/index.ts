@@ -4,6 +4,7 @@ import GameView from '@/views/GameView.vue'
 import SummitView from '@/views/SummitView.vue'
 import GameOver from '@/views/GameOver.vue'
 import RoleSelection from '@/views/RoleSelection.vue'
+import GameGuide from '@/views/GameGuide.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -13,6 +14,7 @@ const router = createRouter({
     { path: '/game', name: 'game', component: GameView },
     { path: '/summit', name: 'summit', component: SummitView },
     { path: '/gameover', name: 'gameover', component: GameOver },
+    { path: '/guide', name: 'guide', component: GameGuide },
   ],
 })
 
