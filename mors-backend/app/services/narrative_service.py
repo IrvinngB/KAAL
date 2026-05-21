@@ -264,6 +264,78 @@ def generate_narrative(
                 if s and s in first_para:
                     _exclude_suffix.append(s)
 
+        # CRITICAL FIX: Extract action text from last narrative to prevent repetition.
+        # Build a "stripped" version by removing known prefixes, suffixes, and other injected text.
+        stripped = first_para
+        for p in _exclude_prefix:
+            stripped = stripped.replace(p, "", 1)
+        for s in _exclude_suffix:
+            stripped = stripped.replace(s, "", 1)
+        # Remove delta context phrases (known patterns)
+        for delta_phrase in [
+            "El agotamiento se acumula.", "El frío penetra hasta los huesos.",
+            "La mente se nubla.", "La cima se siente más cerca.", "Bajar duele más que subir.",
+        ]:
+            stripped = stripped.replace(delta_phrase, "")
+        # Remove contextual suffixes (hope/desperation/general pools)
+        for pool in (SUFFIXES.get("hope", []), SUFFIXES.get("desperation", []), SUFFIXES.get("general", [])):
+            for suf in pool:
+                if suf in stripped:
+                    stripped = stripped.replace(suf, "")
+        # Remove night flavor if present
+        for nf in NIGHT_FLAVOR:
+            if nf in stripped:
+                stripped = stripped.replace(nf, "")
+        # Remove post-event continuity text
+        if last_event_type and last_event_type in POST_EVENT_OVERRIDES:
+            for pe in POST_EVENT_OVERRIDES[last_event_type]:
+                if pe in stripped:
+                    stripped = stripped.replace(pe, "")
+        # Clean up whitespace
+        stripped = stripped.strip()
+        # If we extracted something meaningful, exclude it
+        if len(stripped) > 10:
+            _exclude_action.append(stripped)
+
+        # ALSO: check ALL known action templates for current tier against the narrative.
+        # This catches cases where willpower degradation modified the text but the core is still recognizable.
+        action_pool = None
+        if willpower >= 50:
+            if altitude_tier == "death_zone":
+                action_pool = DEATH_ZONE
+            elif weather_cat == "storm" and action not in ("CAMP", "EAT", "USE_OXYGEN", "USE_FREE_HEAL"):
+                action_pool = STORM
+            else:
+                templates_map = {
+                    "ADVANCE_NORMAL": ADVANCE_NORMAL.get(altitude_tier, ADVANCE_NORMAL["low"]) if isinstance(ADVANCE_NORMAL, dict) else ADVANCE_NORMAL,
+                    "ADVANCE_AGGRESSIVE": ADVANCE_AGGRESSIVE.get(altitude_tier, ADVANCE_AGGRESSIVE["low"]) if isinstance(ADVANCE_AGGRESSIVE, dict) else ADVANCE_AGGRESSIVE,
+                    "SECURE_ROUTE": SECURE_ROUTE.get(altitude_tier, SECURE_ROUTE["low"]) if isinstance(SECURE_ROUTE, dict) else SECURE_ROUTE,
+                    "CAMP": CAMP.get(weather_cat, CAMP["default"]),
+                    "USE_OXYGEN": USE_OXYGEN.get(altitude_tier, USE_OXYGEN["low"]) if isinstance(USE_OXYGEN, dict) else USE_OXYGEN,
+                    "EAT": EAT.get(altitude_tier, EAT["low"]) if isinstance(EAT, dict) else EAT,
+                    "DESCEND": DESCEND.get(altitude_tier, DESCEND["low"]) if isinstance(DESCEND, dict) else DESCEND,
+                    "REST": REST.get(altitude_tier, REST["low"]) if isinstance(REST, dict) else REST,
+                    "USE_FREE_HEAL": FREE_HEAL.get(altitude_tier, FREE_HEAL["low"]) if isinstance(FREE_HEAL, dict) else FREE_HEAL,
+                    "TOGGLE_OXYGEN": TOGGLE_OXYGEN.get(altitude_tier, TOGGLE_OXYGEN["low"]) if isinstance(TOGGLE_OXYGEN, dict) else TOGGLE_OXYGEN,
+                }
+                action_pool = templates_map.get(action)
+        if action_pool:
+            for tmpl in action_pool:
+                if tmpl and tmpl in first_para:
+                    _exclude_action.append(tmpl)
+
+        # Also check willpower pools (DESPAIR/DOUBT) for exclusion
+        if willpower < 15 and isinstance(LOW_WILLPOWER_DESPAIR, dict):
+            despair_pool = LOW_WILLPOWER_DESPAIR.get(willpower_tier, LOW_WILLPOWER_DESPAIR.get("low", []))
+            for tmpl in despair_pool:
+                if tmpl and tmpl in first_para:
+                    _exclude_action.append(tmpl)
+        elif willpower < 50 and isinstance(LOW_WILLPOWER_DOUBT, dict):
+            doubt_pool = LOW_WILLPOWER_DOUBT.get(willpower_tier, LOW_WILLPOWER_DOUBT.get("low", []))
+            for tmpl in doubt_pool:
+                if tmpl and tmpl in first_para:
+                    _exclude_action.append(tmpl)
+
     # --- Action narrative ---
     willpower_tier = _get_willpower_tier(altitude)
     if willpower < 15:

@@ -496,7 +496,8 @@ def process(state: GameState, action: ActionType) -> tuple[GameState, TurnDeltas
         _tick(new_state, deltas, is_night)
         new_state.last_action = action
 
-    if new_state.player.hp <= 0 and new_state.status == SessionStatus.ALIVE:
+    # Death check: always overrides summit/alive if HP reaches 0 from passive damage
+    if new_state.player.hp <= 0:
         new_state.status = SessionStatus.DEAD
 
     new_state.updated_at = datetime.now(timezone.utc)
